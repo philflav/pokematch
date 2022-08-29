@@ -1,9 +1,11 @@
 
 const pokeAPIBaseUrl = "https://pokeapi.co/api/v2/pokemon/";
 const game = document.getElementById('game');
+const score = document.getElementById('score');
 
 let firstPick;
 let isPaused = true;
+let attempts;
 let matches;
 
 const colors = {
@@ -25,10 +27,11 @@ const colors = {
 
 const loadPokemon = async () => {
     const randomIds = new Set();
-    while(randomIds.size < 8){
+    while(randomIds.size < 18){
         const randomNumber = Math.ceil(Math.random() * 150);
         randomIds.add(randomNumber);
     }
+    console.log(randomIds)
     const pokePromises = [...randomIds].map(id => fetch(pokeAPIBaseUrl + id))
     const results = await Promise.all(pokePromises);
     return await Promise.all(results.map(res => res.json()));
@@ -38,7 +41,9 @@ const resetGame = async() => {
     game.innerHTML = '';
     isPaused = true;
     firstPick = null;
+    attempts = 0;
     matches = 0;
+    score.innerHTML = `${attempts} guesses`;
     setTimeout(async () => {
         const loadedPokemon = await loadPokemon();
         displayPokemon([...loadedPokemon, ...loadedPokemon]);
@@ -62,6 +67,7 @@ const displayPokemon = (pokemon) => {
         </div>
     `}).join('');
     game.innerHTML = pokemonHTML;
+    
 }
 
 const clickCard = (e) => {
@@ -79,6 +85,8 @@ const clickCard = (e) => {
     else {
         const secondPokemonName = pokemonCard.dataset.pokename;
         const firstPokemonName = firstPick.dataset.pokename;
+        attempts +=1
+        score.innerHTML = `${attempts} guesses <br> ${matches} matches`;
         if(firstPokemonName !== secondPokemonName) {
             const [firstFront, firstBack] = getFrontAndBackFromCard(firstPick);
             setTimeout(() => {
@@ -88,8 +96,9 @@ const clickCard = (e) => {
             }, 500)    
         }else {
             matches++;
-            if(matches === 8) {
-                console.log("WINNER");
+            score.innerHTML = `${attempts} guesses <br> ${matches} matches`;
+            if(matches === 18) {
+                score.innerHTML =`You win with ${attempts} guesses`
             }
             firstPick = null;
             isPaused = false;
